@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Érudit Togo - Formations Informatiques</title>
+    
+    <!-- Configuration PWA pour l'installation sur Android -->
+    <link rel="manifest" href='data:application/json,{"name":"Érudit Togo","short_name":"Érudit","start_url":"index.html","display":"standalone","background_color":"#7c3aed","theme_color":"#7c3aed","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2000/2000293.png","sizes":"512x512","type":"image/png"}]}'>
+    <meta name="theme-color" content="#7c3aed">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root { --primary: #7c3aed; --secondary: #a855f7; --bg: #f8fafc; --success: #10b981; --tmoney: #ed1c24; --flooz: #f59e0b; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; }
+        body { background: var(--bg); color: #1e293b; padding-bottom: 90px; }
+
+        header { background: var(--primary); color: white; padding: 30px 20px; text-align: center; border-radius: 0 0 30px 30px; position: relative; }
+        .admin-trigger { position: absolute; top: 10px; right: 15px; opacity: 0.5; font-size: 0.7rem; color: white; cursor: pointer; }
+
+        /* Catalogue des cours */
+        .container { padding: 20px; }
+        .course-card { background: white; border-radius: 20px; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); position: relative; }
+        
+        .status-badge { position: absolute; top: 10px; right: 10px; padding: 5px 12px; border-radius: 15px; font-size: 0.7rem; font-weight: 700; color: white; z-index: 10; }
+        .status-paid { background: #f59e0b; }
+        .status-free { background: var(--success); }
+        .status-unlocked { background: #3b82f6; }
+
+        .course-img { height: 120px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; color: white; font-size: 3rem; }
+        .course-body { padding: 20px; }
+        .course-body h3 { font-size: 1.1rem; margin-bottom: 8px; }
+        .course-body p { font-size: 0.85rem; color: #64748b; line-height: 1.4; }
+
+        .btn-action { width: 100%; padding: 14px; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .btn-pay { background: var(--primary); color: white; }
+        .btn-open { background: #3b82f6; color: white; }
+        .btn-certif { background: var(--success); color: white; margin-top: 10px; }
+
+        /* Installation Banner */
+        #install-banner { display: none; background: #1e1b4b; color: white; padding: 15px; margin: 10px 20px; border-radius: 15px; align-items: center; justify-content: space-between; font-size: 0.8rem; }
+        #install-btn { background: var(--primary); border: none; color: white; padding: 6px 12px; border-radius: 8px; font-weight: 600; }
+
+        /* Modals */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 5000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 450px; padding: 25px; border-radius: 25px; text-align: center; }
+        
+        .pay-option { display: flex; align-items: center; gap: 15px; padding: 15px; border: 2px solid #eee; border-radius: 15px; margin-bottom: 12px; cursor: pointer; text-align: left; }
+        .pay-option.active { border-color: var(--primary); background: #f5f3ff; }
+
+        /* WhatsApp Float */
+        .whatsapp-float { position: fixed; bottom: 100px; right: 20px; background: #25d366; color: white; width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1000; text-decoration: none; }
+
+        /* Navigation */
+        .nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; padding: 15px 0; border-top: 1px solid #eee; z-index: 1000; }
+        .nav-item { flex: 1; text-align: center; color: #94a3b8; font-size: 0.75rem; }
+        .nav-item.active { color: var(--primary); }
+    </style>
+</head>
+<body>
+
+    <!-- Bannière d'installation Android -->
+    <div id="install-banner">
+        <span>Installer l'app sur mon téléphone</span>
+        <button id="install-btn">Installer</button>
+    </div>
+
+    <header>
+        <div class="admin-trigger" onclick="checkAdmin()">Formateur</div>
+        <h2>Érudit Togo</h2>
+        <p style="font-size: 0.8rem; opacity: 0.9;">Formations Informatiques & Numériques</p>
+    </header>
+
+    <div class="container" id="course-list">
+        <!-- Les cours seront générés ici par JavaScript -->
+    </div>
+
+    <!-- BOUTON WHATSAPP -->
+    <a href="https://wa.me/22890000000?text=Bonjour Érudit Togo, j'ai une question sur vos formations informatiques." class="whatsapp-float" target="_blank">
+        <i class="fab fa-whatsapp"></i>
+    </a>
+
+    <!-- MODAL DE PAIEMENT MOBILE MONEY -->
+    <div id="payment-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="pay-title">Débloquer la formation</h3>
+            <p style="color: #64748b; font-size: 0.85rem; margin: 15px 0;">Sélectionnez votre mode de paiement :</p>
+            
+            <div class="pay-option" onclick="selectPay(this)">
+                <i class="fas fa-sim-card" style="color: var(--tmoney); font-size: 1.5rem;"></i>
+                <div><strong style="color: var(--tmoney);">T-Money</strong><br><small>Paiement via Togocom</small></div>
+            </div>
+
+            <div class="pay-option" onclick="selectPay(this)">
+                <i class="fas fa-sim-card" style="color: var(--flooz); font-size: 1.5rem;"></i>
+                <div><strong style="color: var(--flooz);">Flooz</strong><br><small>Paiement via Moov Money</small></div>
+            </div>
+
+            <button class="btn-action btn-pay" style="margin-top: 10px;" onclick="processPayment()">Confirmer le paiement</button>
+            <p onclick="closeModal('payment-modal')" style="margin-top: 15px; color: #94a3b8; font-size: 0.8rem; cursor: pointer;">Annuler</p>
+        </div>
+    </div>
+
+    <!-- PANNEAU FORMATEUR -->
+    <div id="admin-panel" class="modal" style="background: white; align-items: flex-start; overflow-y: auto;">
+        <div style="width: 100%; max-width: 500px; margin: 20px auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                <h3>Publier un nouveau cours</h3>
+                <i class="fas fa-times" onclick="closeModal('admin-panel')" style="cursor:pointer"></i>
+            </div>
+            <input type="text" id="add-title" placeholder="Titre (ex: Maintenance Informatique)" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #ddd;">
+            <select id="add-cat" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #ddd;">
+                <option>Bureautique</option>
+                <option>Développement Web</option>
+                <option>Graphisme</option>
+                <option>Maintenance</option>
+            </select>
+            <input type="number" id="add-price" placeholder="Prix en FCFA (0 pour gratuit)" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #ddd;">
+            <textarea id="add-desc" placeholder="Description courte..." style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #ddd; height: 100px;"></textarea>
+            <button class="btn-action btn-pay" onclick="saveCourse()">Publier sur le catalogue</button>
+        </div>
+    </div>
+
+    <nav class="nav">
+        <div class="nav-item active"><i class="fas fa-laptop-code"></i><br>Cours</div>
+        <div class="nav-item" onclick="alert('Bientôt disponible : Votre progression')"><i class="fas fa-play-circle"></i><br>Continuer</div>
+        <div class="nav-item" onclick="alert('Vos certificats apparaîtront ici après réussite')"><i class="fas fa-award"></i><br>Certificats</div>
+    </nav>
+
+    <script>
+        // --- DONNÉES DES COURS (Informatique Togo) ---
+        let db_courses = JSON.parse(localStorage.getItem('erudit_it_db')) || [
+            { id: 1, title: "Maîtriser Microsoft Office", cat: "Bureautique", price: 3000, desc: "Apprenez Word, Excel et PowerPoint pour travailler en bureau au Togo.", icon: "fa-file-excel" },
+            { id: 2, title: "Maintenance & Réparation PC", cat: "Maintenance", price: 5000, desc: "Apprenez à diagnostiquer et réparer les pannes matérielles et logicielles.", icon: "fa-tools" },
+            { id: 3, title: "Introduction au Code HTML/CSS", cat: "Développement Web", price: 0, desc: "Créez vos premières pages web gratuitement avec Érudit.", icon: "fa-code" }
+        ];
+
+        let unlockedCourses = JSON.parse(localStorage.getItem('unlocked_it')) || [];
+        let currentCourseId = null;
+
+        // --- RENDU DU CATALOGUE ---
+        function render() {
+            const list = document.getElementById('course-list');
+            list.innerHTML = "";
+            
+            db_courses.forEach(c => {
+                const isPaid = c.price > 0;
+                const isUnlocked = unlockedCourses.includes(c.id) || !isPaid;
+                
+                list.innerHTML += `
+                    <div class="course-card">
+                        <span class="status-badge ${isUnlocked ? (isPaid ? 'status-unlocked' : 'status-free') : 'status-paid'}">
+                            ${isUnlocked ? (isPaid ? 'DÉBLOQUÉ' : 'GRATUIT') : c.price + ' F'}
+                        </span>
+                        <div class="course-img">
+                            <i class="fas ${c.icon || 'fa-laptop'}"></i>
+                        </div>
+                        <div class="course-body">
+                            <small style="color:var(--primary); font-weight:700;">${c.cat}</small>
+                            <h3>${c.title}</h3>
+                            <p>${c.desc}</p>
+                            
+                            ${isUnlocked ? 
+                                `<button class="btn-action btn-open" onclick="startCourse('${c.title}')"><i class="fas fa-play"></i> Accéder au contenu</button>
+                                 <button class="btn-action btn-certif" onclick="alert('Félicitations ! Certificat en cours de génération pour ' + '${c.title}')"><i class="fas fa-certificate"></i> Télécharger Certificat</button>` : 
+                                `<button class="btn-action btn-pay" onclick="openPayment(${c.id}, '${c.title}', ${c.price})"><i class="fas fa-lock"></i> Débloquer avec Flooz / T-Money</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // --- GESTION PAIEMENT ---
+        function openPayment(id, title, price) {
+            currentCourseId = id;
+            document.getElementById('pay-title').innerText = "Payer " + price + " F pour " + title;
+            document.getElementById('payment-modal').style.display = 'flex';
+        }
+
+        function selectPay(el) {
+            document.querySelectorAll('.pay-option').forEach(opt => opt.classList.remove('active'));
+            el.classList.add('active');
+        }
+
+        function processPayment() {
+            alert("Vérification du paiement sur le réseau mobile... Patientez.");
+            setTimeout(() => {
+                unlockedCourses.push(currentCourseId);
+                localStorage.setItem('unlocked_it', JSON.stringify(unlockedCourses));
+                closeModal('payment-modal');
+                render();
+                alert("Félicitations ! La formation est maintenant débloquée.");
+            }, 1500);
+        }
+
+        // --- GESTION ADMIN ---
+        function checkAdmin() {
+            const code = prompt("Entrez le code formateur (Togo) :");
+            if(code === "228") document.getElementById('admin-panel').style.display = 'flex';
+            else alert("Accès refusé.");
+        }
+
+        function saveCourse() {
+            const title = document.getElementById('add-title').value;
+            const price = parseInt(document.getElementById('add-price').value);
+            const desc = document.getElementById('add-desc').value;
+            const cat = document.getElementById('add-cat').value;
+
+            if(!title || isNaN(price)) return alert("Veuillez remplir les informations.");
+
+            const newCourse = { id: Date.now(), title, cat, price, desc, icon: "fa-laptop" };
+            db_courses.unshift(newCourse);
+            localStorage.setItem('erudit_it_db', JSON.stringify(db_courses));
+            render();
+            closeModal('admin-panel');
+        }
+
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function startCourse(title) { alert("Démarrage de la formation : " + title + "\nPréparez-vous à apprendre !"); }
+
+        // --- INSTALLATION PWA ---
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-banner').style.display = 'flex';
+        });
+
+        document.getElementById('install-btn').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') document.getElementById('install-banner').style.display = 'none';
+                deferredPrompt = null;
+            }
+        });
+
+        // --- DÉMARRAGE ---
+        render();
+
+        if ('serviceWorker' in navigator) {
+            const sw = `self.addEventListener('fetch', e => e.respondWith(fetch(e.request)));`;
+            const blob = new Blob([sw], {type: 'text/javascript'});
+            navigator.serviceWorker.register(URL.createObjectURL(blob));
+        }
+    </script>
+</body>
+</html>
+
+      
